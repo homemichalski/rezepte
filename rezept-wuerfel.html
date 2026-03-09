@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Rezept Würfel</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #FAF7F2;
+    --dark: #1C1A17;
+    --accent: #C8A96E;
+    --accent-light: #E8D5B0;
+    --muted: #8A8070;
+    --card: #FFFFFF;
+    --border: #EDE8DF;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0 0 60px;
+    overflow-x: hidden;
+  }
+
+  /* Header */
+  .header {
+    width: 100%;
+    padding: 48px 24px 32px;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+    background: var(--cream);
+  }
+
+  .header-eyebrow {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(28px, 8vw, 42px);
+    font-weight: 600;
+    line-height: 1.15;
+    color: var(--dark);
+  }
+
+  .header h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .header-sub {
+    margin-top: 10px;
+    font-size: 14px;
+    color: var(--muted);
+    font-weight: 300;
+  }
+
+  /* Main content */
+  .main {
+    width: 100%;
+    max-width: 440px;
+    padding: 36px 20px 0;
+  }
+
+  /* Category chips */
+  .section-label {
+    font-size: 11px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .categories {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 32px;
+  }
+
+  .cat-btn {
+    position: relative;
+    padding: 16px 12px;
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .cat-btn:active { transform: scale(0.97); }
+
+  .cat-btn.active {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .cat-icon {
+    font-size: 26px;
+    display: block;
+    margin-bottom: 6px;
+    line-height: 1;
+  }
+
+  .cat-name {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--dark);
+    display: block;
+  }
+
+  .cat-btn.active .cat-name { color: #fff; }
+
+  .cat-count {
+    font-size: 11px;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  .cat-btn.active .cat-count { color: rgba(255,255,255,0.75); }
+
+  .cat-check {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .cat-btn.active .cat-check {
+    display: flex;
+  }
+
+  .cat-check::after {
+    content: '✓';
+    font-size: 10px;
+    color: white;
+    font-weight: 700;
+  }
+
+  /* Roll button */
+  .roll-wrap {
+    margin-bottom: 32px;
+  }
+
+  .roll-btn {
+    width: 100%;
+    padding: 20px;
+    background: var(--dark);
+    color: var(--cream);
+    border: none;
+    border-radius: 16px;
+    font-family: 'Playfair Display', serif;
+    font-size: 18px;
+    font-style: italic;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .roll-btn:active { transform: scale(0.98); background: #333; }
+  .roll-btn:disabled { opacity: 0.5; cursor: default; }
+
+  .roll-btn .dice {
+    font-size: 22px;
+    display: inline-block;
+    transition: transform 0.3s;
+  }
+
+  .roll-btn.rolling .dice {
+    animation: spin 0.4s ease-in-out;
+  }
+
+  @keyframes spin {
+    0%   { transform: rotate(0deg) scale(1); }
+    50%  { transform: rotate(180deg) scale(1.4); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+
+  /* Result card */
+  .result-card {
+    background: var(--card);
+    border-radius: 20px;
+    padding: 28px 24px;
+    border: 1px solid var(--border);
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.35s ease;
+    pointer-events: none;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+  }
+
+  .result-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: all;
+  }
+
+  .result-cat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 500;
+    margin-bottom: 14px;
+    background: var(--accent-light);
+    padding: 4px 10px;
+    border-radius: 20px;
+  }
+
+  .result-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(17px, 5vw, 22px);
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--dark);
+    margin-bottom: 22px;
+  }
+
+  .result-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 16px;
+    background: var(--cream);
+    border: 1.5px solid var(--accent);
+    color: var(--dark);
+    text-decoration: none;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+  }
+
+  .result-link:active { background: var(--accent-light); transform: scale(0.98); }
+
+  .result-link svg {
+    width: 14px; height: 14px;
+    stroke: var(--accent);
+    fill: none;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  .again-btn {
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1.5px solid var(--border);
+    color: var(--muted);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .again-btn:active { border-color: var(--accent); color: var(--accent); transform: scale(0.98); }
+
+  /* No selection warning */
+  .warning {
+    text-align: center;
+    padding: 16px;
+    font-size: 13px;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+
+  .warning.show { opacity: 1; }
+
+  /* Footer */
+  .footer {
+    margin-top: 48px;
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+
+  .footer a { color: var(--accent); text-decoration: none; }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <p class="header-eyebrow">Zuckerjagdwurst</p>
+  <h1>Lass dich<br><em>inspirieren</em></h1>
+  <p class="header-sub">990 vegane Rezepte — zufällig ausgewählt</p>
+</header>
+
+<main class="main">
+
+  <p class="section-label">Mahlzeit wählen</p>
+
+  <div class="categories">
+    <button class="cat-btn active" data-cat="fruehstueck" onclick="toggleCat(this)">
+      <div class="cat-check"></div>
+      <span class="cat-icon">🥐</span>
+      <span class="cat-name">Frühstück</span>
+      <span class="cat-count">87 Rezepte</span>
+    </button>
+    <button class="cat-btn active" data-cat="mittagessen" onclick="toggleCat(this)">
+      <div class="cat-check"></div>
+      <span class="cat-icon">🥗</span>
+      <span class="cat-name">Mittagessen</span>
+      <span class="cat-count">138 Rezepte</span>
+    </button>
+    <button class="cat-btn active" data-cat="abendessen" onclick="toggleCat(this)">
+      <div class="cat-check"></div>
+      <span class="cat-icon">🍝</span>
+      <span class="cat-name">Abendessen</span>
+      <span class="cat-count">548 Rezepte</span>
+    </button>
+    <button class="cat-btn active" data-cat="dessert" onclick="toggleCat(this)">
+      <div class="cat-check"></div>
+      <span class="cat-icon">🍰</span>
+      <span class="cat-name">Dessert</span>
+      <span class="cat-count">217 Rezepte</span>
+    </button>
+  </div>
+
+  <div class="roll-wrap">
+    <button class="roll-btn" id="rollBtn" onclick="roll()">
+      <span class="dice">🎲</span>
+      Zufälliges Rezept würfeln
+    </button>
+    <p class="warning" id="warning">Bitte mindestens eine Kategorie auswählen.</p>
+  </div>
+
+  <div class="result-card" id="resultCard">
+    <span class="result-cat-tag" id="resultCat"></span>
+    <p class="result-title" id="resultTitle"></p>
+    <button class="result-link" id="resultLink" onclick="openRecipe()">
+      <svg viewBox="0 0 24 24"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+      Rezept öffnen
+    </button>
+    <div class="divider">oder</div>
+    <button class="again-btn" onclick="roll()">Nochmal würfeln ↺</button>
+  </div>
+
+  <p class="footer">Rezepte von <a href="https://www.zuckerjagdwurst.com" target="_blank">zuckerjagdwurst.com</a></p>
+
+</main>
+
+<script>
+const CATS = {
+  fruehstueck: { label: "🥐 Frühstück", recipes: [{"title":"Veganes Menemen (Türkisches Rührei mit Tomaten)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-menemen-tuerkisches-ruehrei-mit-tomaten"},{"title":"Vegane Frischkäsebrötchen mit Knoblauchbutter","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-frischkaesebroetchen-mit-knoblauchbutter"},{"title":"Einfache Sonntagsbrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-sonntagsbroetchen"},{"title":"Veganes Rührei ohne Tofu (sojafrei)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-ruehrei-ohne-tofu-sojafrei"},{"title":"Selbstgebackene Sonntagsbrötchen mit Gewürzgurken und Dill","url":"https://www.zuckerjagdwurst.com/de/rezepte/selbstgebackene-sonntagsbroetchen-mit-gewuerzgurken-und-dill"},{"title":"Vegane Soufflé Pancakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-souffle-pancakes"},{"title":"Vegane French Toasts (Arme Ritter)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-french-toast-arme-ritter"},{"title":"Veganer Schoko Swirl Aufstrich (mit Naturtofu)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schoko-swirl-aufstrich-mit-naturtofu"},{"title":"Veganer Aufstrich mit gegrillter Paprika, Räuchertofu und Oliven","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-aufstrich-mit-gegrillter-paprika-raeuchertofu-oliven"},{"title":"Selbstgemachte vegane Croissants und Schokocroissants","url":"https://www.zuckerjagdwurst.com/de/rezepte/selbstgemachte-vegane-croissants-und-schokocroissants"},{"title":"Veganer Curry-Dattel-Aufstrich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-curry-dattel-aufstrich"},{"title":"Vegane Waffeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-waffeln"},{"title":"Vegane Käsebrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kaesebroetchen"},{"title":"Vegane Aufstriche aus Sonnenblumenkernen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-aufstriche-aus-sonnenblumenkernen"},{"title":"Selbstgemachte vegane Frischkäse-Rollen","url":"https://www.zuckerjagdwurst.com/de/rezepte/selbstgemachte-vegane-frischkaese-rollen"},{"title":"Vegane Mandel-Pancakes mit selbstgemachtem Lemon Curd","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mandel-pancakes-mit-selbstgemachtem-lemon-curd"},{"title":"Vegane Franzbrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-franzbroetchen"},{"title":"Vegane Kaffee-Muffins mit Salted-Caramel-Kern","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kaffee-muffins-mit-salted-caramel-kern"},{"title":"Veganer Porridge-Auflauf mit Erdnussbutter & Marmelade","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-porridge-auflauf-mit-erdnussbutter-marmelade"},{"title":"Veganer Apple Crumble Joghurt (als Frühstück to go)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-apple-crumble-joghurt-fruehstueck-to-go"},{"title":"Vegane gefüllte Pancakes mit Schokolade und Marmelade","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-gefuellte-pancakes-mit-schokolade-und-marmelade"},{"title":"Veganer Croissant-Auflauf mit Zwetschgen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-croissant-auflauf-mit-zwetschgen"},{"title":"Veganer herzhafter Frühstücks-Gugelhupf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-herzhafter-fruehstuecks-gugelhupf"},{"title":"7 vegane Rezepte zum Frühstücken","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-rezepte-zum-fruehstuecken"},{"title":"Vegane French Toast Sticks mit Erdnussbutter & Marmelade","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-french-toast-sticks-mit-erdnussbutter-und-marmelade"},{"title":"Vegane McMuffins","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mcmuffins"},{"title":"Veganes Birchermüsli mit Vanille & Beeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-birchermuesli-mit-vanille-und-beeren"},{"title":"Vegane Vanille-Waffeln mit Rhabarber-Kompott","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-vanille-waffeln-mit-rhabarber-kompott"},{"title":"Vegane Frühstücksmuffins mit Erdbeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-fruehstuecksmuffins-mit-erdbeeren"},{"title":"Vegane Stracciatella-Pancakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-stracciatella-pancakes"},{"title":"Vegane Osterbrötchen in Hasenform","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-osterbroetchen-in-hasenform"},{"title":"Vegane Pancakes mit Vanilleeis & heißen Beeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pancakes-mit-vanilleeis-und-heissen-beeren"},{"title":"Vegane Bananen-Pancakes mit Blaubeersoße","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bananen-pancakes-mit-blaubeersosse"},{"title":"Veganer körniger Frischkäse (Hüttenkäse)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-koerniger-frischkaese-huettenkaese"},{"title":"Vegane Kürbis-Pancakes mit Pumpkin Spice","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbis-pancakes-mit-pumpkin-spice"},{"title":"Vegane Zimtschnecken-Waffeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-zimtschnecken-waffeln"},{"title":"Frühstückstoasts mit veganem Ricotta und gebackenen Erdbeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/fruehstueckstoasts-veganer-ricotta-gebackene-erdbeeren"},{"title":"Vegane Pizzabrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pizzabroetchen"},{"title":"Vegane Hafer-Waffeln mit Apfel-Birnen-Kompott","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-hafer-waffeln-mit-apfel-birnen-kompott"},{"title":"Vegane Overnight Oats mit selbstgemachtem Apfelmus","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-overnight-oats-mit-selbstgemachtem-apfelmus"},{"title":"Vegane Hafer-Pancakes mit Zitrone & Mohn","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pancakes-mit-zitrone-mohn"},{"title":"Veganes Chai-Porridge mit Waldheidelbeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-chai-porridge-mit-waldheidelbeeren"},{"title":"Veganes Bananensplit auf Waffeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-bananensplit-auf-waffeln-eisbecher"},{"title":"Super leichtes, veganes Blaubeer-Granola","url":"https://www.zuckerjagdwurst.com/de/rezepte/super-leichtes-veganes-blaubeer-granola"},{"title":"Vegane Kimchi-Pancakes mit Gochujang-Dip","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kimchi-pancakes"},{"title":"Schneller, veganer Pfannen-Pancake mit eingelassenen Beeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pfannen-pancake-mit-eingelassenen-beeren"},{"title":"Vegane, herzhafte Spinat-Pancakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-herzhafte-spinat-pancakes"},{"title":"Vegane Schokoladenpancakes mit Tahin","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schokoladenpancakes-mit-tahin"},{"title":"Vegane Süßkartoffel-Pancakes mit 3 Zutaten","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegan-suesskartoffel-pancakes-mit-drei-zutaten"},{"title":"7 vegane & einfache Pancakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/sieben-vegane-einfache-pancake-rezepte"},{"title":"Vegane Pancakes mit Zitrone & pflanzlichem Joghurt","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pancakes-mit-zitrone-und-pflanzlichem-joghurt"},{"title":"Veganer Kräuter-Frischkäse","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-frischkaese"},{"title":"Vegane herzhafte Waffeln aus Kartoffeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-herzhafte-waffeln-aus-kartoffeln"},{"title":"Frühstücksbagel mit veganem Avocado-'Eiersalat'","url":"https://www.zuckerjagdwurst.com/de/rezepte/fruehstuecksbagel-mit-veganem-avocado-eiersalat"},{"title":"Frühstückspolenta mit Mandelmus & Feigen","url":"https://www.zuckerjagdwurst.com/de/rezepte/fruehstueckspolenta-mit-mandelmus-und-feigen"},{"title":"Pulled Jackfrucht Waffel-Taco","url":"https://www.zuckerjagdwurst.com/de/rezepte/pulled-jackfrucht-waffel-taco"},{"title":"Selbstgemachtes Tahini-Granola","url":"https://www.zuckerjagdwurst.com/de/rezepte/tahini-granola"},{"title":"Gegrillte Früchte mit Müsli-Crumble","url":"https://www.zuckerjagdwurst.com/de/rezepte/gegrillte-fruechte-mit-muesli-crumble"},{"title":"Englische Muffins mit Lemon Curd","url":"https://www.zuckerjagdwurst.com/de/rezepte/englische-muffins-mit-lemon-curd"},{"title":"Knuspriges, veganes Schokoladengranola","url":"https://www.zuckerjagdwurst.com/de/rezepte/knuspriges-veganes-schokoladengranola"},{"title":"Schnelle Granola-Cups mit Heidelbeerjoghurt","url":"https://www.zuckerjagdwurst.com/de/rezepte/schnelle-granola-cups-mit-heidelbeerjoghurt"},{"title":"Vegane Knoblauchbrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-knoblauchbroetchen"},{"title":"Summer Swirl Smoothie","url":"https://www.zuckerjagdwurst.com/de/rezepte/summer-swirl-smoothie"},{"title":"Veganer Frühstücksburger","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-fruehstuecksburger"},{"title":"Selbstgebackene gefüllte Laugenbrötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/selbstgebackene-gefuellte-laugenbroetchen"},{"title":"Süße & Herzhafte gefüllte vegane Croissants","url":"https://www.zuckerjagdwurst.com/de/rezepte/suesse-und-herzhafte-gefuellte-croissants"},{"title":"Vegane, Süße Pancake Tacos","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-suesse-pancake-tacos"},{"title":"Vegane French Toast Waffeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-french-toast-waffeln"},{"title":"Vegane Mini-Portobello-Burger mit selbstgemachten Brötchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mini-portobello-burger-mit-selbstgemachten-broetchen"},{"title":"Herzhafter veganer Croissant-Auflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/herzhafter-veganer-croissant-auflauf"},{"title":"Vegane Blaubeermuffins mit Streuseln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-blaubeermuffins-mit-streuseln"},{"title":"Vegane Himbeermuffins mit Frischkäse-Füllung","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-gefuellte-himbeermuffins"},{"title":"Vegane Rhabarber-Muffins mit Creme & Kompott","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rhabarber-muffins-mit-sahne-biscoff"},{"title":"Vegane 15 Minuten Frischkäse-Pasta mit Lauch","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-15-minuten-frischkaese-pasta-mit-lauch"},{"title":"Veganer Gewürzkuchen mit Frischkäse-Frosting","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-gewuerzkuchen-mit-frischkaese-frosting"},{"title":"Vegane Schoko-Kirsch-Muffins mit Cheesecake-Füllung","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schoko-kirsch-muffins-mit-cheesecake-fuellung"},{"title":"Vegane Double Chocolate Cheesecake Muffins","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-double-chocolate-cheesecake-muffins"},{"title":"Veganer Schokoladenkuchen vom Blech mit Frischkäse-Topping","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schokoladen-vom-blech-mit-frischkaese-topping"},{"title":"Veganer fluffiger Karottenkuchen mit Frischkäsetopping","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-fluffiger-karottenkuchen-mit-frischkaesetopping"},{"title":"Vegane Kartoffeltaschen mit Spinat-Frischkäse-Füllung","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kartoffeltaschen-mit-spinat-frischkaese-fuellung"},{"title":"Veganes Fischbrötchen mit selbstgemachten Fischstäbchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-fischbroetchen-mit-selbstgemachten-fischstaebchen"},{"title":"Herzhafte Lauch-Frischkäse-Biskuitrolle","url":"https://www.zuckerjagdwurst.com/de/rezepte/herzhafte-lauch-frischkaese-biskuitrolle"},{"title":"Vegane Kürbisgnocchi mit cremiger Spinat-Frischkäse-Soße","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbisgnocchi-mit-cremiger-spinat-frischkaese-sosse"},{"title":"Grillbrote mit Tomaten-Paprika-Aufstrich","url":"https://www.zuckerjagdwurst.com/de/rezepte/grillbrote-mit-tomaten-paprika-aufstrich"},{"title":"Veganes Croissant-Monkeybread mit Schokoladenfüllung","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-gefuelltes-croissant-brot"},{"title":"Vegane Pancake-Burger mit Sojasteaks","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pancake-burger"},{"title":"10 Minuten: Oatmeal mit Apfel & Haselnuss","url":"https://www.zuckerjagdwurst.com/de/rezepte/10-minuten-oatmeal-mit-apfel-und-haselnuss"}] },
+  mittagessen: { label: "🥗 Mittagessen", recipes: [{"title":"Vegane Käse-Lauch-Suppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kaese-lauch-suppe-mit-sojahack"},{"title":"Pinker veganer Glasnudelsalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/pinker-veganer-glasnudelsalat"},{"title":"Auberginen-Schnitzel mit Gochujang Kartoffelsalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/auberginen-schnitzel-mit-gochujang-kartoffelsalat"},{"title":"Bruschetta-Nudelsalat mit knusprigen Croûtons","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bruschetta-nudelsalat-mit-knusprigen-croutons"},{"title":"Knuspriger Dumpling Salat mit Currydressing","url":"https://www.zuckerjagdwurst.com/de/rezepte/knuspriger-dumpling-salat-mit-currydressing"},{"title":"Vegane Gulaschsuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-gulaschsuppe"},{"title":"Vegane Brokkolisuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-brokkolisuppe"},{"title":"Veganer Gnocchisalat mit Brokkolipesto","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-gnocchisalat-mit-brokkolipesto"},{"title":"Veganer Kartoffelsalat mit Linsen & Senf-Dill-Soße","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kartoffelsalat-mit-linsen-senf-dill-sosse"},{"title":"Veganer Grilled Cheese Burger","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-grilled-cheese-burger"},{"title":"Veganer Schichtsalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schichtsalat"},{"title":"Veganes Sushi selbermachen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-sushi-selbermachen"},{"title":"Veganes Bánh mì Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-banh-mi-sandwich"},{"title":"Zoodlesalat mit Shredded Tofu","url":"https://www.zuckerjagdwurst.com/de/rezepte/zoodlesalat-mit-shredded-tofu"},{"title":"Veganer Makkaronisalat mit Mandeldressing","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-makkaronisalat-mit-mandeldressing"},{"title":"Vegane Spargelsuppe mit Haselnuss-Petersilien-Topping","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spargelsuppe-mit-haselnuss-petersilien-topping"},{"title":"Vegane rote Linsensuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rote-linsensuppe"},{"title":"Veganer Nudelsalat mit Erbsenpesto & Honigmelone","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-nudelsalat-mit-erbsenpesto-und-honigmelone"},{"title":"Veganer Griechischer Salat mit Feta aus Nüssen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-griechischer-salat"},{"title":"Veganer Burger mit frittierten Austernpilzen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-burger-mit-frittierten-austernpilzen"},{"title":"Veganer Pulled Jackfruit Burger","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pulled-jackfruit-burger-mit-selbstgemachten-buns"},{"title":"Vegane Lasagnesuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-lasagne-suppe"},{"title":"Veganer Grünkohlsalat mit Sesamdressing","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-gruenkohlsalat-mit-sesamdressing-und-knusprigen-gruenkohl-chips"},{"title":"Vegane Kürbissuppe mit Kurkuma","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbissuppe-mit-kurkuma"},{"title":"Vegane Thai-Kokos-Suppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rote-thai-kokos-suppe-mit-veganem-huehnchen"},{"title":"Vegane Miso-Ramen-Suppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-miso-ramen-suppe"},{"title":"Caprese-Salat mit veganem Cashew-Mozzarella","url":"https://www.zuckerjagdwurst.com/de/rezepte/caprese-salat-veganer-cashew-mozzarella"},{"title":"Sommer-Nudelsalat für jede Grillparty","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-sommer-nudelsalat"},{"title":"Vegane Schnitzel mit Kartoffelsalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schnitzel-mit-kartoffelsalat"},{"title":"Vegane Cremige Pilzsuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/simple-pilzsuppe-mit-drei-pilzsorten"},{"title":"Vegane Nudelsuppe mit Gemüse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nudelsuppe-mit-gemuese"},{"title":"Veganer Taco-Salat mit Walnuss-Hack","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-taco-salat-walnuss-hack"},{"title":"Vegane Kürbis-Ravioli-Salat","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kuerbis-ravioli-salat-mit-trauben-und-aepfeln"},{"title":"Veganes Club Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-club-sandwich"},{"title":"Veganes Meatball Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-meatball-sandwich"},{"title":"Vegane Hühnchen-Pfirsich-Tacos","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-huehnchen-pfirsich-tacos-mit-limettenjoghurt"},{"title":"Veganer Portobello-Burger","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-portobello-burger"},{"title":"Erbsensuppe mit veganen Würstchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/erbsensuppe-mit-veganen-wuerstchen-5-zutaten"},{"title":"Vegane Winter Grain Bowl","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-winter-grain-bowl-mit-ingwer-kurkuma-dressing"},{"title":"Vegane schwäbische Flädlesuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schwaebische-flaedlesuppe"},{"title":"Vegane Fisch-Tacos mit Avocadocreme","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-fisch-tacos-mit-avocadocreme"},{"title":"Veganes BLT Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-blt-sandwich"},{"title":"Veganer Wurstsalat mit Radieschen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-wurstsalat-mit-radieschen"},{"title":"Simple vegane Tomatensuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/simple-vegane-tomatensuppe"},{"title":"Spinatsuppe mit Minze & knusprigen Kartoffelwürfeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/spinatsuppe-mit-minze-und-knusprigen-kartoffelwuerfeln"},{"title":"Gebrannte Linsensuppe mit Wienern","url":"https://www.zuckerjagdwurst.com/de/rezepte/gebrannte-linsensuppe-mit-wienern"},{"title":"Vegane Couscous-Bowl mit Rosenkohl & Tahin","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-couscous-bowl-mit-rosenkohl-und-tahin-dressing"},{"title":"Veganer Antipasti-Nudelsalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-antipasti-nudelsalat"},{"title":"Vegane Reisnudelsuppe (Pho)","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-reisnudelsuppe-pho"},{"title":"Vegane Tortellini-Suppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-tortellini-suppe"},{"title":"Rote Beete Gazpacho","url":"https://www.zuckerjagdwurst.com/de/rezepte/rote-beete-gazpacho"},{"title":"Kalte Gurken-Avocado-Suppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/kalte-gurken-avocado-suppe-mit-geroesteten-kichererbsen"},{"title":"Veganer Eiersalat","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-eiersalat"},{"title":"Sommersalat mit gegrilltem Pfirsich","url":"https://www.zuckerjagdwurst.com/de/rezepte/sommersalat-mit-gegrilltem-pfirsich"},{"title":"Vegane weihnachtliche Rotkohlsuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-weihnachtliche-rotkohlsuppe-mit-zimt-croutons"},{"title":"Veganes Gatsby Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-gatsby-sandwich"},{"title":"Veganes Double Down Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-double-down-sandwich"},{"title":"Vegane Fischstäbchen-Tacos","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-tacos-mit-fischstaebchen-und-erbsen-minz-pueree"},{"title":"Der Klassiker: Veganer Burger mit Soja-Steaks","url":"https://www.zuckerjagdwurst.com/de/rezepte/der-klassiker-veganer-burger-mit-soja-steaks"},{"title":"Vegane Kartoffelsuppe mit Räuchertofu","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kartoffelsuppe-mit-wienern-und-raeuchertofu"},{"title":"Wraps mit veganer Möhrenlachs-Creme","url":"https://www.zuckerjagdwurst.com/de/rezepte/wraps-mit-veganer-moehrenlachs-creme"},{"title":"Veganer Nudelsalat mit grünem Spargel und Erdbeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-nudelsalat-mit-gruenem-spargel-erdbeeren"},{"title":"Schneller Nudelsalat mit Melone & Mais","url":"https://www.zuckerjagdwurst.com/de/rezepte/schneller-nudelsalat-melone-basilikum-gegrilltem-mais"},{"title":"Veganer Maronensuppe mit Pilzen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-maronensuppe-mit-gebratenen-pilzen-und-spicy-nuss-topping"},{"title":"Vegane Burger mit Erdnusssauce & Tofu","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-burger-mit-erdnusssauce-mariniertem-tofu"},{"title":"Vegane Couscous Bowl","url":"https://www.zuckerjagdwurst.com/de/rezepte/gem%C3%BCse-bowl-mit-quinoa-linsen-sesamdressing-knusprigen-kichererbsen"},{"title":"Veganer Thai-Salat mit Sriracha-Mayo","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-thai-salat-sriracha-mayo"},{"title":"Vegane Gazpacho Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/gazpacho-pasta"},{"title":"Vegane Franzözische Zwiebelsuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-franzoesische-zwiebelsuppe-mit-steinpilzen"},{"title":"Veganes Eggplant Parm Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-auberginen-eggplant-parm-sandwich"},{"title":"Veganes Breakfast Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-breakfast-sandwich"},{"title":"Veganes Cheesesteak Sandwich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-cheesesteak-sandwich"},{"title":"Vegane Maronensuppe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-maronensuppe-mit-gebratenen-pilzen-und-spicy-nuss-topping"},{"title":"Veganer Burger mit Gemüsepatty","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-burger-mit-gemuesepatty"},{"title":"Vegane Rote-Beete-Mango-Tacos","url":"https://www.zuckerjagdwurst.com/de/rezepte/rote-beete-mango-tacos"}] },
+  abendessen: { label: "🍝 Abendessen", recipes: [{"title":"Veganer Wikingertopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-wikingertopf-hackbaellchen-kartoffeln"},{"title":"Vegane Rigatoni al Forno","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rigatoni-al-forno"},{"title":"Vegane Kimchi-Focaccia","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kimchi-focaccia-ohne-kneten"},{"title":"Udon Curry mit Tofu und Pak Choi","url":"https://www.zuckerjagdwurst.com/de/rezepte/udon-curry-mit-tofu-pak-choi-und-mais"},{"title":"Veganer Kartoffelpuffer-Auflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kartoffelpuffer-auflauf"},{"title":"Winterliche Open Lasagna mit Wirsing","url":"https://www.zuckerjagdwurst.com/de/rezepte/winterliche-open-lasagna-mit-wirsing-und-pilzen"},{"title":"Knusprige Tempehschnitzel","url":"https://www.zuckerjagdwurst.com/de/rezepte/knusprige-tempehschnitzel-kartoffel-pastinaken-pueree-pilzsosse"},{"title":"Schnelles Linsen-Gulasch mit Spätzle","url":"https://www.zuckerjagdwurst.com/de/rezepte/schnelles-linsen-gulasch-mit-spaetzle"},{"title":"Vegane Kohlrouladen-Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kohlrouladen-pasta"},{"title":"Gebackene Rotkohlsteaks","url":"https://www.zuckerjagdwurst.com/de/rezepte/gebackene-rotkohlsteaks-mit-bohnenpueree"},{"title":"Vegane Rosenkohl-Hollandaise-Pinsa","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rosenkohl-hollandaise-pinsa"},{"title":"Grünkohl mit veganer Pinkelwurst","url":"https://www.zuckerjagdwurst.com/de/rezepte/gruenkohl-mit-veganer-pinkelwurst"},{"title":"Vegane French Onion Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-french-onion-pasta"},{"title":"Vegane Udon Carbonara","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-udon-carbonara"},{"title":"Vegane One-Pot Pasta à la Ceci","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-one-pot-pasta-a-la-ceci"},{"title":"Vegane Pita Pizza à la Funghi","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pita-pizza-a-la-funghi"},{"title":"Veganes Kartoffel-Lauch-Gratin","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kartoffel-lauch-gratin"},{"title":"Nudeln mit veganer Käse-Lauch-Hack-Soße","url":"https://www.zuckerjagdwurst.com/de/rezepte/nudeln-mit-veganer-kaese-lauch-hack-sosse"},{"title":"Veganes Dal Makhani","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-dal-makhani-mit-knoblauch-kaese-pita"},{"title":"Vegane Lasagne mit Béchamelsauce","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-lasagne-mit-bechamelsauce"},{"title":"Vegane Spaghetti Bolognese","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spaghetti-bolognese"},{"title":"Vegane Spaghetti Carbonara","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spaghetti-carbonara"},{"title":"Vegane Pasta alla Vodka","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-penne-alla-vodka"},{"title":"Vegane Pasta Cacio e Pepe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pasta-cacio-e-pepe"},{"title":"Vegane Fettuccine Alfredo","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-fettuccine-alfredo"},{"title":"Vegane Linsen-Bolognese","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-linsen-bolognese"},{"title":"Cremiges veganes Pilz-Risotto","url":"https://www.zuckerjagdwurst.com/de/rezepte/cremiges-veganes-pilz-risotto"},{"title":"Veganes Risotto Milanese","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-risotto-milanese"},{"title":"Veganes Kürbisrisotto","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kuerbisrisotto"},{"title":"Vegane Käsespätzle","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kaesespaetzle"},{"title":"Veganer Sauerbraten mit Spätzle","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-sauerbraten-mit-spaetzle-und-rotkraut"},{"title":"Vegane Königsberger Klopse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-koenigsberger-klopse"},{"title":"Veganes Beef Wellington","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-beef-wellington"},{"title":"Vegane Entenkeulen mit Klößen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-entenkeulen-mit-kloessen-und-rotkraut"},{"title":"Veganer Braten mit Kräuterkruste","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-braten-krauterkruste-petersilienkartoffeln-zwiebelsosse"},{"title":"Vegane Kohlrouladen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kohlrouladen"},{"title":"Veganer Seitanbraten","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-seitanbraten-mit-bratensosse-und-weihnachtlichen-beilagen"},{"title":"Veganer Nussbraten","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-nussbraten-mit-serviettenknoedeln-und-zwiebel-sahne-sosse"},{"title":"Veganes Gyros mit Tzatziki","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-gyros-mit-selbstgemachtem-tzatziki"},{"title":"Vegane Pizza aus der Pfanne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pizza-aus-der-pfanne"},{"title":"Vegane BBQ-Pizza vom Blech","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bbq-pizza-vom-blech"},{"title":"Pizza mit veganem Käserand","url":"https://www.zuckerjagdwurst.com/de/rezepte/pizza-mit-veganem-kaeserand"},{"title":"Vegane türkische Pizza","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-tuerkische-pizza-kraeutersauce"},{"title":"Vegane Focaccia mit Tomaten & Basilikum","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-focaccia-mit-tomaten-und-basilikum"},{"title":"Veganer Flammkuchen Elsässer Art","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-flammkuchen-elsaesser-art"},{"title":"Veganes Kichererbsencurry (Chana Masala)","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kichererbsencurry-chana-masala"},{"title":"Tofu Tikka Masala","url":"https://www.zuckerjagdwurst.com/de/rezepte/tofu-tikka-masala"},{"title":"Veganes Butter Chicken mit Reis","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-butter-chicken-mit-reis"},{"title":"Veganes Kürbiscurry","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kuerbiscurry-mit-ingwerchips"},{"title":"Vegane Kürbis-Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbis-pasta-tomate-feta"},{"title":"Vegane Enchiladas","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-enchiladas-mit-suesskartoffel-haehnchen-fuellung"},{"title":"Veganes Chili sin Carne","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-chili-sin-carne"},{"title":"Veganes Pad Thai","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-pad-thai-mit-huehnchen"},{"title":"Veganer Linseneintopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-linseneintopf"},{"title":"Vegane Maultaschen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-maultaschen-mit-gemuesefuellung"},{"title":"Vegane Spinatlasagne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spinatlasagne"},{"title":"Vegane Kürbislasagne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbislasagne"},{"title":"Einfache vegane Lasagne","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-vegane-lasagne-vom-blech"},{"title":"Veganer Mac'n'Cheese Auflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-macncheese-auflauf-mit-erbsen-und-speck"},{"title":"Vegane Kürbis-Mac'n'Cheese","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbis-mac-and-cheese-mit-gebackenem-rosenkohl"},{"title":"Veganes grünes Mac'n'Cheese","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-gruenes-mac-n-cheese-mit-knusprigem-bacon"},{"title":"Vegane Tantan Ramen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-tantan-ramen-mit-veganem-ei"},{"title":"Vegane Miso-Ramen mit Räuchertofu","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-miso-ramen-suppe-mit-raeuchertofu"},{"title":"Vegane BBQ-Ribs vom Grill","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bbq-ribs-vom-grill-mit-scharfem-limetten-coleslaw"},{"title":"Veganer Knödelauflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-knoedelauflauf-mit-leberkaese-und-sauerkraut"},{"title":"Vegane Kartoffelklöße mit Pilzgulasch","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kartoffelklossee-pilzgulasch-rotkraut"},{"title":"Veganes Gulasch mit Pfannenknödeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-gulasch-mit-pfannenknoedeln-und-rotkraut"},{"title":"Veganer Hähnchen-Curry mit Erdnüssen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-erdnuss-huehnchen-curry-mit-reis"},{"title":"Vegane Japanische Gyoza","url":"https://www.zuckerjagdwurst.com/de/rezepte/japanische-gyoza"},{"title":"Vegane Mandu mit Kimchi","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mandu-mit-kimchi"},{"title":"Vegane Frühlingsrollen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-fruehlingsrollen"},{"title":"Veganer Flammkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-flammkuchen-101-unsere-4-lieblingsrezepte"},{"title":"Veganer Bauerntopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bauerneintopf"},{"title":"Spanische Paella mit Artischocken","url":"https://www.zuckerjagdwurst.com/de/rezepte/spanische-paella-mit-artischocken"},{"title":"Veganes Palak Paneer","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-palak-paneer"},{"title":"Veganes Shakshuka","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-shakshuka-mit-feto"},{"title":"Vegane Quiche Lorraine","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-quiche-lorraine"},{"title":"Vegane Gemüse-Quiche","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-gemuese-quiche"},{"title":"Einfache Spaghetti Aglio e Olio","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-spaghetti-aglio-e-olio"},{"title":"Vegane Pasta Primavera","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pasta-primavera"},{"title":"Pappardelle mit Pilzragout","url":"https://www.zuckerjagdwurst.com/de/rezepte/pappardelle-mit-pilzragout"},{"title":"Karamellisierte Lauch-Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/karamellisierte-lauch-pasta"},{"title":"Vegane Caesar Salad Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-caesar-salad-pasta"},{"title":"Vegane Chicken Marsala Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-chicken-marsala-pasta"},{"title":"Vegane Green Goddess Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-green-goddess-pasta"},{"title":"Vegane Chorizo-Pasta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-chorizo-pasta"},{"title":"Vegane Bao Buns","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bao-buns"},{"title":"Veganer Moussaka","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-moussaka-mit-belugalinsen"},{"title":"Vegane Samosas","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-samosas-mit-kartoffel-kichererbsen-fuellung"},{"title":"7 vegane Pasta-Rezepte","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-pasta-rezepte"},{"title":"Veganer Hot-Dog mit Ananassalsa","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-hot-dogs-mit-gegrillter-ananas"},{"title":"Vegane Poutine","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-poutine"},{"title":"Vegane Buffalo Wings aus Blumenkohl","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-buffalo-chicken-wings-aus-blumenkohl"},{"title":"Vegane Pupusas","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pupusas-gefuellte-tortillas-bohnen-kaese-salsa-curtido"},{"title":"Vegane Ravioli mit Bolognese-Füllung","url":"https://www.zuckerjagdwurst.com/de/rezepte/selbstgemachte-ravioli-mit-veganer-bolognese-fuellung"},{"title":"Vegane Kürbis-Ravioli in Salbei-Butter","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbis-ravioli-salbeibutter-pekannuesse"},{"title":"Vegane Germknödel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-germknoedel-mit-pflaumenfuellung"},{"title":"Veganer Kaiserschmarrn","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-zwetschgen-kaiserschmarrn"},{"title":"Vegane Rouladen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rouladen-mit-miniknoedeln-und-sauerkraut"},{"title":"Veganer Eintopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/herbsteintopf"},{"title":"Vegane Schupfnudel-Pilz-Pfanne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schupfnudel-pilz-pfanne"},{"title":"Veganer Jägerschnitzel","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-jaegerschnitzel-mit-pfifferlingen-und-spaetzle"},{"title":"Vegane Senfeier","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-senfeier-mit-kartoffeln"},{"title":"Vegane Kartoffelpuffer","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kartoffelpuffer-mit-apfelmus"},{"title":"Veganer Biryani","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-biryani-jackfrucht"},{"title":"Veganer Pastitsio","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pastitsio-mit-gruenkohl-griechischer-hack-nudelauflauf"},{"title":"Vegane Zimtschnecken","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfach-und-gelingsicher-vegane-zimtschnecken"},{"title":"Veganer Hefezopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-hefezopf-mit-nussfuellung"},{"title":"Sauerteigbrot selbst backen","url":"https://www.zuckerjagdwurst.com/de/rezepte/sauerteig-starter-ansetzen-guide"},{"title":"Vegane Piroggen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-piroggen-mit-sauerkraut-und-pilzen"},{"title":"Veganer Grünkohleintopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-gruenkohl-eintopf-seitan-weisse-bohnen"},{"title":"Vegane Böhmische Knödel mit Gulasch","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-boehmische-knoedel-mit-szegediner-gulasch"},{"title":"Vegane Älplermagronen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-aelplermagronen"},{"title":"Gnocchi in Walnusssoße","url":"https://www.zuckerjagdwurst.com/de/rezepte/gnocchi-in-walnusssosse-und-salbei-butter"},{"title":"Vegane Gözleme","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-goezleme-mit-spinat-kartoffel-fuellung"},{"title":"Vegane Crêpes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-crepes"},{"title":"Veganes English Breakfast","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-english-breakfast"},{"title":"Vegane Eggs Benedict","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-eggs-benedict"},{"title":"Vegane Falafel Curry","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-falafel-curry-mit-naan-brot"},{"title":"Vegane Sommerrollen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-sommerrollen-erdnuss-dip-soja-dip"},{"title":"Vegane Pelmeni","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pelmeni-mit-dinkel-spinat-fuellung"},{"title":"Veganes Raclette","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-raclette"},{"title":"Veganes Käsefondue","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kaesefondue"},{"title":"Gemüsedöner","url":"https://www.zuckerjagdwurst.com/de/rezepte/gemuesedoener-mit-selbstgemachtem-fladenbrot"},{"title":"Vegane Brezenknödel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-brezenknoedel-mit-pfifferlingsragout"},{"title":"Veganer Linseneintopf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-linseneintopf"},{"title":"Veganer Schupfnudel-Auflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schupfnudel-auflauf-mit-rosenkohl-und-hack"},{"title":"Vegane Hot Dogs","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-hot-dogs-mit-selbstgemachten-gemuesewuerstchen"},{"title":"Veganer Pot Pie mit Jackfruit","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-jackfruit-pot-pie"},{"title":"Taco mit gebackener Avocado","url":"https://www.zuckerjagdwurst.com/de/rezepte/taco-mit-gebackener-avocado-und-limetten-dip"},{"title":"Vegane Teriyaki Tacos","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-teriyaki-mock-chicken-tacos"},{"title":"Vegane Taco Dogs","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-taco-dogs"},{"title":"Vegane Nacho Taco Bowl","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nacho-taco-bowl"},{"title":"Vegane Thai Tacos mit Erdnusssauce","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-thai-tacos-mit-erdnusssauce"},{"title":"Fried Classic Taco","url":"https://www.zuckerjagdwurst.com/de/rezepte/fried-classic-taco"},{"title":"Veganer Sommer-Taco","url":"https://www.zuckerjagdwurst.com/de/rezepte/sommer-taco-mit-pfirsich-salsa"},{"title":"Vegane Sushi Taco Rolls","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-deep-fried-crispy-sushi-taco-rolls"},{"title":"Veganer Falafel Taco","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kichererbsen-thunfisch-taco"},{"title":"Veganer Ramen Taco","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-ramen-taco"},{"title":"Schnelle gebratene Nudeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/schnelle-gebratene-nudeln-mit-gemuese-tofu-und-erdnusssosse"},{"title":"Veganer Lachs im Blätterteig","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-lachs-im-blaetterteig"},{"title":"Veganer Pastöis","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pasteis-de-nata"},{"title":"Vegane Spargellasagne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spargellasagne-mit-sauce-hollandaise"},{"title":"Veganer One-Pot-Pesto-Nudelauflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-one-pot-pesto-nudelauflauf-mit-knuspriger-kaesekruste"},{"title":"Vegane Mohn-Schupfnudeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mohnnudeln-mit-pflaumensauce"},{"title":"Cremige Gnocchi mit Bohnen & Pilzen","url":"https://www.zuckerjagdwurst.com/de/rezepte/cremige-gnocchi-mit-hefeschmelz-bohnen-pilzen"},{"title":"Hot Oil Udonnudeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/hot-oil-udonnudeln-mit-knusprigen-tofubroeseln"},{"title":"Schnelle One Pot Udon-Nudeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/schnelle-one-pot-udon-nudeln-mit-ingwer-gemuese-und-tofu"},{"title":"Veganer Bohnenauflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bohnenauflauf"},{"title":"Veganer Kürbis-Hack-Auflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kuerbis-hack-auflauf"},{"title":"Vegane Büffelmeatballs","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-buffalo-meatballs-mit-schnittlauch-dip"},{"title":"Veganer Auberginenauflauf","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-auberginenauflauf-parmigiana-di-melanzane"},{"title":"Vegane Orzotto mit Erbsen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-orzotto-erbsen-raeuchertofu"},{"title":"7 vegane Biergarten-Rezepte","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-biergarten-rezepte"},{"title":"Veganer Grillkäse","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-grillkaese"},{"title":"Veganer Leberkäse","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-leberkaese"},{"title":"Vegane Weißwurst","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-weisswurst"},{"title":"Vegane Krautkrapfen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-krautkrapfen"},{"title":"Veganer Obazda","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-obazda"},{"title":"Veganer Camembert","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-camembert"},{"title":"Veganes Käsefondue aus dem Brot","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kaesefondue-aus-dem-brot-mit-knusprigem-topping"},{"title":"Vegane Frikadellen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-frikadellen-mit-kartoffeln-oma-kohlrabi-moehren-gemuese"},{"title":"Vegane Buletten","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-buletten-frikadellen"},{"title":"Vegane Köttbullar","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-koettbullar-groensakbullar-mit-rahmsosse"},{"title":"Vegane Köfte auf Bohnenpüree","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-koefte-auf-weissem-bohnenpueree"},{"title":"Vegane Malai Kofta","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-malai-kofta-indische-gemuesebaellchen"},{"title":"Vegane Jackfrucht Nuggets","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-jackfrucht-chicken-nuggets"},{"title":"Veganes Chana Dal Tadka","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-chana-dal-tadka"},{"title":"Vegane Pilaw","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-pilaw-kichererbsen-pilze"},{"title":"Veganer Colcannon","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-colcannon-mit-geroesteren-moehren"},{"title":"Veganes Katsu Sando","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-katsu-sando"},{"title":"Vegane Saltimbocca","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-saltimbocca-alla-romana"},{"title":"Vegane Empanadas","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-empanadas-gemuesefuellung"},{"title":"Veganer Langos","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-langos"},{"title":"Veganer Smörrebröd","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-smoerrebroed"},{"title":"Veganer Corn Dogs","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-corn-dogs"},{"title":"Vegane Rainbow Lasagne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rainbow-lasagne"},{"title":"7 vegane Dumpling-Rezepte","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-dumpling-rezepte"}] },
+  dessert: { label: "🍰 Dessert", recipes: [{"title":"Veganer Bratapfel-Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bratapfel-cheesecake"},{"title":"No-Bake Schoko-Dattel-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/no-bake-schoko-dattel-tarte"},{"title":"Vegane Maulwurfkuchen-Plätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-maulwurfkuchen-plaetzchen"},{"title":"Vegane Bueno Plätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bueno-plaetzchen"},{"title":"Vegane Haselnuss-Nougat-Plätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-und-glutenfreie-haselnuss-nougat-plaetzchen"},{"title":"Vegane Plätzchen ohne Ausstechen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-plaetzchen-ohne-ausstechen-1-teig-7-ideen"},{"title":"Vegane Buchteln mit Vanillesoße","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-buchteln-mit-vanillesosse"},{"title":"Vegane Linzer Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-linzer-torte-mit-erdbeer-fuellung"},{"title":"Vegane Schwarzwälder Kirschtorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schwarzwaelder-kirschtorte"},{"title":"Veganer Marmorkuchen mit Miso","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-marmorkuchen-mit-miso"},{"title":"Veganer Grießkuchen mit Blaubeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-griesskuchen-mit-blaubeeren"},{"title":"Veganer Bienenstich-Käsekuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bienenstich-kaesekuchen-mit-rhabarber-erdbeer-kompott"},{"title":"Vegane Strawberry Cheesecake Cookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-strawberry-cheesecake-cookies"},{"title":"Vegane Haselnuss-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-haselnuss-tarte"},{"title":"Vegane Schwarzwälder Kirschtorte ohne Backen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schwarzwaelder-kirschtorte-ohne-backen"},{"title":"Vegane weiße Schokoladentarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-weisse-schokoladentarte-mit-rosa-pfeffer"},{"title":"Veganes Zimtschnecken-Tiramisu","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-zimtschnecken-tiramisu"},{"title":"Vegane Schwarzwälder Kirsch-Plätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schwarzwaelder-kirsch-plaetzchen"},{"title":"Vegane Kokosmakronen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kokosmakronen"},{"title":"15 Plätzchen-Klassiker in vegan","url":"https://www.zuckerjagdwurst.com/de/rezepte/plaetzchen-klassiker-in-vegan"},{"title":"Veganer Schokoladen-Babka","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schokoladen-babka"},{"title":"Veganer Käsekuchen mit Karamell","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kaesekuchen-mit-karamell"},{"title":"Veganer Zimtschnecken-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-zimtschnecken-kuchen"},{"title":"Vegane Stachelbeer-Baiser-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-stachelbeer-baiser-torte"},{"title":"Veganer Kirschkuchen mit Streuseln","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kirsch-mohn-kuchen-streusel-vom-blech"},{"title":"Vegane Cappuccino-Streuseltorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-cappuccino-streuseltorte-mit-blaubeeren"},{"title":"Veganes Rhabarber-Pistazien-Tiramisu","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-rhabarber-pistazien-tiramisu-im-glas"},{"title":"Veganer Erdbeer-Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-erdbeer-cheesecake-mit-marshmallowcreme"},{"title":"Vegane Erdbeer-Stracciatella-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-erdbeer-stracciatella-torte"},{"title":"Veganer Rhabarber-Crumble","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-rhabarber-crumble-mit-vanilleeis"},{"title":"Veganer Karottenkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-karottenkuchen-mit-joghurtfrosting"},{"title":"Veganer Maulwurfkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-maulwurfkuchen"},{"title":"Vegane Cheesecake Brownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-cheesecake-brownies"},{"title":"Veganes Bratapfel-Tiramisu","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-bratapfel-tiramisu"},{"title":"Vegane Mousse au Chocolat","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mousse-au-chocolat-aus-nur-2-zutaten"},{"title":"Veganer Spekulatius-Käsekuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-spekulatius-kaesekuchen"},{"title":"4 Ideen für vegane Brownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/4-ideen-fuer-vegane-brownies"},{"title":"Vegane Nussmakronen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nussmakronen"},{"title":"Veganer Pflaumenkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pflaumenkuchen-aus-dem-glas"},{"title":"Einfache vegane Schoko-Lebkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-vegane-lebkuchen"},{"title":"Vegane Carrot Cake Cookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-carrot-cake-cookies"},{"title":"Vegane Kürbisbrownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kuerbisbrownies"},{"title":"Gedeckter Apfelkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/gedeckter-apfelkuchen-vom-blech"},{"title":"Veganer Cookie Dough Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-cookie-dough-cheesecake"},{"title":"Veganer Russischer Zupfkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-russischer-zupfkuchen"},{"title":"Veganer Erdbeerkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-erdbeerkuchen-mit-sahne"},{"title":"Vegane Rhabarber-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rhabarber-tarte"},{"title":"Veganes Kinder Bueno","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kinder-bueno"},{"title":"Vegane Mozartkugel-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mozartkugel-torte"},{"title":"Vegane Puddingbrezeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-puddingbrezeln"},{"title":"Saftiger veganer Marmorkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/saftiger-veganer-marmorkuchen"},{"title":"Vegane Chocolate Chip Cookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-weiche-chocolate-chip-cookies"},{"title":"Veganer Filo-Apfel-Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-filo-apfel-cheesecake"},{"title":"Veganer Schokoladenkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schokoladenkuchen-mit-frosting"},{"title":"Vegane Granatapfel-Schokoladen-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-granatapfel-schokoladen-tarte"},{"title":"Vegane Neapolitan Cookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-neapolitan-cookies"},{"title":"Veganer Kürbis-Käsekuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kuerbis-kaesekuchen"},{"title":"Veganer Birnen-Ingwer-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-birnen-ingwer-kuchen"},{"title":"Veganer Quark-Streuselkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-quark-streuselkuchen-mit-stachelbeeren"},{"title":"Veganes Tiramisu","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-einfaches-tiramisu"},{"title":"Vegane Eistörtchen (Mini Baked Alaska)","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-eistoertchen-mini-baked-alaska"},{"title":"Vegane Snickers-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-snickers-torte"},{"title":"Vegane Spaghettieis-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spaghettieis-torte"},{"title":"Veganer Topfenstrudel mit Kirschen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-topfenstrudel-mit-kirschen"},{"title":"Veganer Erdbeerkuchen vom Blech","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-erdbeerkuchen-vom-blech-mit-vanillecreme"},{"title":"Veganer Rhabarber-Quark-Streuselkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-rhabarber-quark-streuselkuchen"},{"title":"Veganer No Bake Mango Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/no-bake-mango-cheesecake"},{"title":"Simple vegane Orangen-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/simple-vegane-orangen-tarte"},{"title":"Vegane saftige Schokoladenbrownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/saftige-vegane-schokoladenbrownies"},{"title":"Vegane Brezel-Erdnussbutter-Tarte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-brezel-erdnussbutter-tarte-5-zutaten"},{"title":"Vegane gefüllte Tartelettes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-gefuellte-tartelettes-mit-fluffiger-marshmallow-creme"},{"title":"Vegane Mousse au Chocolat mit Aquafaba","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mousse-au-chocolate-mit-aquafaba"},{"title":"Vegane Pralinen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pralinen-gefuellt-mit-mandelcreme-und-marmelade"},{"title":"Vegane Puddingplätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-puddingplaetzchen"},{"title":"Vegane Nougatknödel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nougatknoedel-mit-zwetschgensosse"},{"title":"Vegane Bibi & Tina Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bibi-und-tina-torte"},{"title":"Vegane Kokos-Limetten-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kokos-limetten-torte"},{"title":"Simple vegane Trauben-Joghurt-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/simple-vegane-trauben-joghurt-torte"},{"title":"Veganer Johannisbeer-Baiser-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-johannisbeer-baiser-kuchen"},{"title":"Vegane No Bake Cheesecake-Haselnuss-Bites","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-no-bake-cheesecake-haselnuss-bites"},{"title":"Vegane Schokokuss-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schokokuss-torte"},{"title":"Vegane Donuts","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-donuts-selbermachen"},{"title":"Vegane Espresso-Brownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-espresso-brownies"},{"title":"Veganes Erdbeer-Tiramisu","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-erdbeer-tiramisu"},{"title":"Vegane Schoko-Mousse-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schoko-mousse-torte"},{"title":"Vegane Tiramisu-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-tiramisu-torte"},{"title":"Vegane Eierlikörtorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-eierlikoertorte-mit-haselnussboeden"},{"title":"No Bake Haselnuss-Schokoladen-Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/no-bake-haselnuss-schokoladen-riegel"},{"title":"Veganer Orangen-Olivenöl-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-orangen-olivenoel-kuchen-mit-walnuessen"},{"title":"Veganes Grießbrei-Dessert mit Kirschen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-20-minuten-dessert-mit-griessbrei-kirschen"},{"title":"Vegane No Bake Spekulatius-Tartelettes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spekulatius-tartelettes-mit-vanillecreme-ohne-backen"},{"title":"Veganer Baumkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-baumkuchen"},{"title":"Veganer Milchreis mit Zwetschgenkompott","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-milchreis-mit-zwetschgenkompott"},{"title":"Vegane Vollkorn-Haselnuss-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-vollkorn-haselnuss-torte-mit-nougatcreme"},{"title":"Veganer Schokoladencrumble","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schokoladencrumble-zwetschgen"},{"title":"Vegane Brombeertorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-brombeertorte-ohne-backen"},{"title":"Veganer Schokoladen-Käsekuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schokoladen-kaesekuchen-mit-johannisbeeren"},{"title":"Saftiger veganer Kirsch-Schokoladen-Gugelhupf","url":"https://www.zuckerjagdwurst.com/de/rezepte/saftiger-veganer-kirsch-schokoladen-gugelhupf"},{"title":"Vegane Sachertorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-sachertorte"},{"title":"Veganer versunkener Apfelkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-versunkener-apfelkuchen"},{"title":"Veganer Pflaumen-Hefekuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pflaumen-hefekuchen-vom-blech-mit-streuseln"},{"title":"Veganer Mohnkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-mohnkuchen"},{"title":"7 vegane Kuchenklassiker","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-kuchenklassiker-wie-von-oma"},{"title":"Vegane Cupcakes mit Eis","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-cupcakes-gefuellt-mit-eis"},{"title":"Vegane Schokoladenmousse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-dunkle-und-helle-schokoladenmousse-mit-fruchtspiegel"},{"title":"Vegane Beeren-Tartelettes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-sommer-tartelettes"},{"title":"Vegane Crêpe-Torte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-crepe-torte-erdbeeren-creme"},{"title":"Vegane Torte mit 4 verschiedenen Böden","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-torte-mit-4-verschiedenen-boeden"},{"title":"Veganer Erdnussbutter-Schokoladen-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-erdnussbutter-schokoladen-kuchen"},{"title":"Vegane Pfirsichtorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pfirsichtorte-mit-schmandcreme"},{"title":"Vegane Mandeltorte mit Nougatcreme","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mandeltorte-nougatcreme-erdnuesse"},{"title":"Veganer Bienenstich","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bienenstich"},{"title":"Vegane Lebkuchenmousse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-lebkuchenmousse-mit-karamellisierten-orange"},{"title":"Vegane Babka mit Nougat & Haselnuss","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-babka-mit-nougat-haselnuss"},{"title":"Veganer Schokoladenkuchen mit Süßkartoffel","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schokoladenkuchen-mit-suesskartoffel"},{"title":"Veganer Zitronen Upside Down Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-zitronen-upside-down-kuchen"},{"title":"Veganer Kürbiskuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kuerbiskuchen-mit-tahini-orangen-frosting"},{"title":"Veganer Apfelstrudel","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-apfelstrudel"},{"title":"Veganer Schokoladen-Gugelhupf","url":"https://www.zuckerjagdwurst.com/de/rezepte/simpler-veganer-schokoladen-gugelhupf-mit-kola"},{"title":"Veganer Pflaumenkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pflaumenkuchen-vom-blech-aus-nur-fuenf-zutaten"},{"title":"Veganer Brownie Sundae","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-brownie-sundae-eisbecher"},{"title":"Vegane Zitronen-Cupcakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-zitronen-cupcakes-mit-weisser-schokolade"},{"title":"Einfache vegane Schokoladentorte","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-vegane-schokoladentorte-mit-beeren"},{"title":"Veganer New York Cheesecake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-new-york-cheesecake"},{"title":"Veganer Bratapfel-Crumble","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-bratapfel-crumble-mit-marzipanstreuseln"},{"title":"7 vegane Weihnachtsplätzchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-rezepte-fuer-weihnachtsplaetzchen"},{"title":"Vegane Rocher Pralinen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-rocher-haselnuss-pralinen"},{"title":"Walnusskuchen mit Walnussfrosting","url":"https://www.zuckerjagdwurst.com/de/rezepte/walnusskuchen-mit-walnussfrosting"},{"title":"Veganer Walnusskuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-walnusskuchen-mit-kaffee-creme"},{"title":"Veganer Spekulatiuskuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-spekulatiuskuchen-mit-gekochten-zimt-birnen"},{"title":"Vegane Pralinen 101","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pralinen-101-basics-und-unsere-6-lieblingsrezepte"},{"title":"Veganer Vanillepudding","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-vanillepudding-mit-mango-und-chia"},{"title":"Vegane Beeren-Schnecken","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-beeren-kardamom-schnecken"},{"title":"Vegane Nussschnecken","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nussschnecken"},{"title":"Vegane Streuselschnecken","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-streuselschnecken-mit-johannisbeeren"},{"title":"Vegane Lava Cakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-lava-cakes"},{"title":"Vegane Nougatringe","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nougatringe-wie-von-der-baeckerei"},{"title":"Veganer Zitronen-Mohn-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-zitronen-mohn-kuchen"},{"title":"Vegane Schillerlocken","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schillerlocken-mit-roten-johannisbeeren"},{"title":"Vegane Panna Cotta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-panna-cotta-mit-karamellsauce"},{"title":"Vegane Nussecken","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-nussecken"},{"title":"Gelingsichere vegane Ausstecher","url":"https://www.zuckerjagdwurst.com/de/rezepte/gelingsichere-vegane-ausstecher"},{"title":"Vegane Vanillekipferl","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-vanillekipferl"},{"title":"Veganer Banoffee Pie","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-banoffee-pie"},{"title":"Veganer (Key) Lime Pie","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-key-lime-pie"},{"title":"Nice Cream","url":"https://www.zuckerjagdwurst.com/de/rezepte/nice-cream"},{"title":"Veganer Kalter Hund","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kalter-hund"},{"title":"Vegane Dänische Butterkekse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-daenische-butterkekse"},{"title":"Vegane Husarenkrapfen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-husarenkrapfen"},{"title":"Veganer Pie mit karamellisierten Äpfeln","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-pie-mit-karamellisierten-aepfeln"},{"title":"Vegane Schokobanane","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schokobanane-auf-sahne-und-biskuitteig"},{"title":"Vegane Himbeer-Joghurt-Törtchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-himbeer-joghurt-toertchen-ohne-backen"},{"title":"Veganer Frankfurter Kranz","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-frankfurter-kranz"},{"title":"Vegane Mandel-Karamell-Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-mandel-karamell-riegel"},{"title":"Vegane Frozen-Erdbeer-Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-frozen-erdbeer-riegel"},{"title":"Veganer Kirsch-Cobbler","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-kirsch-cobbler"},{"title":"Vegane Galette mit Nektarinen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-galette-nektarinen-pflaumen-brombeeren"},{"title":"Veganer Erdbeer-Käsekuchen im Glas","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-erdbeer-kaesekuchen-im-glas"},{"title":"Saftiger veganer Haselnusskuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/saftiger-veganer-haselnusskuchen"},{"title":"Veganer Funfetti Cake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-funfetti-cake"},{"title":"Veganer Candy Cake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-candy-cake"},{"title":"Vegane Kokos-Panna-Cotta","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kokos-panna-cotta-mit-erdbeeren"},{"title":"Vegane Donauwelle","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-donauwelle"},{"title":"Vegane Erdbeer-Donauwelle","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-erdbeer-donauwelle"},{"title":"Vegane Stracciatella-Trifle","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-stracciatella-trifle-mit-erdbeeren"},{"title":"Vegane Apfelkrapfen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-apfelkrapfen-apple-fritters"},{"title":"Vegane Funnel Cakes","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-funnel-cakes"},{"title":"Vegane Bratäpfel","url":"https://www.zuckerjagdwurst.com/de/rezepte/einfache-vegane-brataepfel-mit-vanillesauce"},{"title":"Vegane Marillenknödel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-marillenknoedel"},{"title":"Vegane Prinzessinnentörtchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-prinzessinnentoertchen-schwedentorte"},{"title":"Feigen aus dem Ofen","url":"https://www.zuckerjagdwurst.com/de/rezepte/feigen-aus-dem-ofen"},{"title":"Veganer Scheiterhaufen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-scheiterhaufen"},{"title":"Vegane Florentiner","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-florentiner"},{"title":"Backen mit Kindern: Vegane Zauberpfannkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/backen-mit-kindern-vegane-zauberpfannkuchen"},{"title":"Schokoladen-Tacos mit Nice Cream","url":"https://www.zuckerjagdwurst.com/de/rezepte/schokoladen-tacos-mit-nice-cream-and-kiwi"},{"title":"Gin-Tonic-Sorbet","url":"https://www.zuckerjagdwurst.com/de/rezepte/gin-tonic-sorbet"},{"title":"Veganer Salted Caramel Eisbecher","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-salted-caramel-eisbecher"},{"title":"Veganer Viennetta","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-viennetta-selber-machen"},{"title":"4 Popsicles für den Sommer","url":"https://www.zuckerjagdwurst.com/de/rezepte/4-popsicles-die-du-diesen-sommer-noch-essen-solltest"},{"title":"Vegane Schokocrossies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-choco-crossies"},{"title":"Vegane Schokobons","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-schokobons-selber-machen"},{"title":"Vegane Milchschnitte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-milchschnitte"},{"title":"Veganes Twix","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-twix-selbermachen"},{"title":"Vegane Toblerone","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-toblerone"},{"title":"Vegane Yogurette","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-yogurette"},{"title":"7 vegane Süßigkeiten-Klassiker","url":"https://www.zuckerjagdwurst.com/de/rezepte/7-vegane-rezepte-suessigkeiten-klassiker"},{"title":"Veganer Zitronen-Mohn-Kekse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-zitronen-mohn-kekse"},{"title":"Vegane Bounty","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bounty-selber-machen"},{"title":"Vegane Spitzbuben","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spitzbuben"},{"title":"Vegane glutenfreie Zimtsterne","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-zimtsterne"},{"title":"Veganes Schwarz-Weiß-Gebäck","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-schwarz-weiss-gebaeck"},{"title":"Vegane Spekulatius-Mandarinen-Schnitten","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-spekulatius-mandarinen-schnitten"},{"title":"Vegane Creme Brûlée Kekse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-creme-brulee-kekse"},{"title":"Vegane Crème Brûlée","url":"https://www.zuckerjagdwurst.com/de/rezepte/franzoesische-vegane-creme-brulee"},{"title":"Veganes Pavlova","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-pavlova-selbermachen"},{"title":"Veganer Blätterteigstrudel","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-blaetterteigstrudel-mit-gemuese-hack-fuellung"},{"title":"Vegane Hefepfannkuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-hefepfannkuchen-mit-aepfeln"},{"title":"Vegane Schmand-Mandarinen-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-schmand-mandarinen-kuchen-mit-bluetenummantelung"},{"title":"Veganer Mohn-Pflaumen-Kuchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-mohn-pflaumen-kuchen-mit-streuseldecke"},{"title":"Veganes Tiramisu mit Bitterorange","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-tiramisu-mit-bitterorange"},{"title":"Vegane Toffifee","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-toffifee-selber-machen"},{"title":"Vegane Raffaello","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-raffaello"},{"title":"Veganes Knoppers","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-knoppers"},{"title":"Veganes Hanuta","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-hanuta"},{"title":"Veganes Giotto","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-giotto-aus-nur-fuenf-zutaten"},{"title":"Vegane Kinder Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kinder-riegel"},{"title":"Veganes Kinder Pingui","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kinder-pingui"},{"title":"Veganes Kinder Maxi King","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-kinder-maxi-king"},{"title":"Veganes Soft Cake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-soft-cake"},{"title":"Vegane Doppelkekse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-doppelkekse"},{"title":"Vegane Kinder Country","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kinder-country-selber-machen"},{"title":"Grillbanane mit Schokolade","url":"https://www.zuckerjagdwurst.com/de/rezepte/gegrillte-grillbanane"},{"title":"Vegane Prinzessinnentörtchen","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-prinzessinnentoertchen-schwedentorte"},{"title":"Süße Spieße mit veganen Brownies","url":"https://www.zuckerjagdwurst.com/de/rezepte/suesse-spiesse-mit-brownies-marshmallows-und-beeren"},{"title":"Vegane Schokoladen Brownie Cookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-chocolate-brownie-crinkle-cookies"},{"title":"Vegane Biskuitrolle mit Erdbeeren","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-bisquitrolle-mit-erdbeeren"},{"title":"Vegane Madeleines","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-madeleines"},{"title":"Oster-Tartelettes","url":"https://www.zuckerjagdwurst.com/de/rezepte/oster-tartelettes-mit-veganem-eierlikoer"},{"title":"Veganes Lebkuchenhaus","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganes-diy-lebkuchenhaus-zum-selbermachen"},{"title":"Vegane Pfeffernüsse","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pfefferminze"},{"title":"Flinke Black-Forest-Schnitten","url":"https://www.zuckerjagdwurst.com/de/rezepte/flinke-black-forest-schnitten"},{"title":"Vegane Disco Bit Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-disco-bit-riegel"},{"title":"Vegane Himbeerschnitte","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-himbeerschnitte"},{"title":"Vegane Pfirsich-Himbeer Biskuitrolle","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-pfirsich-himbeer-melba-biskuitrolle"},{"title":"Vegane Upside-Down-Cake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-upside-down-cake-mit-pflaumen"},{"title":"Vegane Naked Cake","url":"https://www.zuckerjagdwurst.com/de/rezepte/veganer-naked-cake-mit-zitrone-und-thymian"},{"title":"Vegane Snickerdoodles","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-snickerdoodles-mit-kuerbis"},{"title":"Vegane Snickers Energy Balls","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-snickers-energy-balls"},{"title":"Vegane Tahin-Amaranth-Riegel","url":"https://www.zuckerjagdwurst.com/de/rezepte/tahin-amaranth-riegel"},{"title":"Vegane Brookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-brookies"},{"title":"Vegane Kokos-Brookies","url":"https://www.zuckerjagdwurst.com/de/rezepte/vegane-kokos-brookies"}] }
+};
+
+let activeCats = new Set(['fruehstueck','mittagessen','abendessen','dessert']);
+
+function toggleCat(btn) {
+  const cat = btn.dataset.cat;
+  if (activeCats.has(cat)) {
+    if (activeCats.size === 1) return; // keep at least one
+    activeCats.delete(cat);
+    btn.classList.remove('active');
+  } else {
+    activeCats.add(cat);
+    btn.classList.add('active');
+  }
+  document.getElementById('warning').classList.remove('show');
+}
+
+function roll() {
+  if (activeCats.size === 0) {
+    document.getElementById('warning').classList.add('show');
+    return;
+  }
+
+  const btn = document.getElementById('rollBtn');
+  btn.classList.add('rolling');
+  setTimeout(() => btn.classList.remove('rolling'), 400);
+
+  const pool = [];
+  activeCats.forEach(cat => {
+    CATS[cat].recipes.forEach(r => pool.push({ ...r, cat }));
+  });
+
+  const pick = pool[Math.floor(Math.random() * pool.length)];
+
+  const card = document.getElementById('resultCard');
+  card.classList.remove('visible');
+
+  setTimeout(() => {
+    document.getElementById('resultCat').textContent = CATS[pick.cat].label;
+    document.getElementById('resultTitle').textContent = pick.title;
+    const link = document.getElementById('resultLink');
+    link.dataset.url = pick.url;
+    card.classList.add('visible');
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, 200);
+}
+
+function openRecipe() {
+  const url = document.getElementById("resultLink").dataset.url;
+  if (url) window.open(url, "_blank");
+}
+</script>
+</body>
+</html>
